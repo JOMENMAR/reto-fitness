@@ -1,0 +1,277 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: #020617;
+  color: #f9fafb;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0 16px;
+  flex-wrap: wrap;
+}
+
+.nav-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #334155;
+  background: #020617;
+  color: #e5e7eb;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.nav-btn.active {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #022c22;
+  font-weight: 600;
+}
+
+.nav-btn:hover:not(.active) {
+  background: #111827;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card,
+.season-card {
+  background: #020617;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #1e293b;
+}
+
+.season-card {
+  margin-bottom: 8px;
+}
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.muted {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.card-header-row,
+.season-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.season-select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.season-form {
+  margin-top: 10px;
+}
+
+.season-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.season-form-row input[type="text"],
+.season-form-row input[type="date"] {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.primary-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: none;
+  background: #3b82f6;
+  color: #eff6ff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  background: #2563eb;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid #1f2933;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.table th {
+  background: #020617;
+}
+
+.danger-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #b91c1c;
+  background: #7f1d1d;
+  color: #fee2e2;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.danger-btn:hover {
+  background: #991b1b;
+}
+
+.small-danger {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #b91c1c;
+  background: #7f1d1d;
+  color: #fee2e2;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.date-row {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.date-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.date-row input[type="date"] {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+}
+
+.participants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.participant-card {
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+  background: #020617;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.participant-name {
+  font-weight: 600;
+}
+
+.participant-sub {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.add-btn {
+  margin-top: 4px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: none;
+  background: #22c55e;
+  color: #022c22;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.add-btn:disabled {
+  background: #374151;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.limit-text {
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: #f97316;
+}
+
+.points-input {
+  width: 60px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.admin-card {
+  margin-bottom: 8px;
+}
+
+.admin-buttons-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
