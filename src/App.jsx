@@ -162,6 +162,26 @@ export default function App() {
     });
   }
 
+  function handleDeleteSeason() {
+    if (!activeSeason) return;
+
+    const ok = window.confirm(
+      `¿Seguro que quieres eliminar la temporada "${activeSeason.name}" y todas sus actividades? Esta acción no se puede deshacer.`
+    );
+    if (!ok) return;
+
+    const seasonId = activeSeason.id;
+
+    // Borramos actividades de esa temporada
+    remove(ref(db, `activities/${seasonId}`));
+
+    // Borramos la temporada en sí
+    remove(ref(db, `seasons/${seasonId}`));
+
+    // Limpiamos la temporada activa (el listener de seasons pondrá otra si existe)
+    setActiveSeasonId(null);
+  }
+
   const [selectedView, setSelectedView] = useState("score");
 
   return (
@@ -177,6 +197,7 @@ export default function App() {
         onChangeActiveSeason={handleChangeSeason}
         onCreateSeason={handleCreateSeason}
         allParticipants={PARTICIPANTS}
+        onDeleteSeason={handleDeleteSeason} // 👈 NUEVO
       />
 
       <AdminPanel activeSeason={activeSeason} onAdminBoost={handleAdminBoost} />

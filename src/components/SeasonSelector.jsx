@@ -11,6 +11,7 @@ export function SeasonSelector({
   onChangeActiveSeason,
   onCreateSeason,
   allParticipants,
+  onDeleteSeason,
 }) {
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState(todayISO());
@@ -93,6 +94,12 @@ export function SeasonSelector({
             </select>
           )}
         </div>
+
+        {seasons.length > 0 && onDeleteSeason && (
+          <button type="button" className="danger-btn" onClick={onDeleteSeason}>
+            Eliminar temporada
+          </button>
+        )}
       </div>
 
       <form className="season-form" onSubmit={handleSubmit}>
