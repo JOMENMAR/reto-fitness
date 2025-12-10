@@ -17,9 +17,7 @@ function todayISO() {
 }
 
 export default function App() {
-  // ============================
-  // 🔥 TEMPORADAS (desde Firebase)
-  // ============================
+  // ===== TEMPORADAS =====
   const [seasons, setSeasons] = useState([]);
   const [activeSeasonId, setActiveSeasonId] = useState(null);
 
@@ -30,7 +28,6 @@ export default function App() {
       const list = Object.keys(data).map((id) => ({ id, ...data[id] }));
       setSeasons(list);
 
-      // Si no hay temporada activa seleccionada, usar la primera
       if (list.length > 0 && !activeSeasonId) {
         setActiveSeasonId(list[0].id);
       }
@@ -42,24 +39,49 @@ export default function App() {
     [seasons, activeSeasonId]
   );
 
-  function handleCreateSeason({ name, startDate }) {
-    push(ref(db, "seasons"), {
+  // PARTICIPANTES activos de la temporada
+  const participantsForSeason = useMemo(() => {
+    if (!activeSeason || !activeSeason.participants) {
+      // fallback: todos
+      return PARTICIPANTS;
+    }
+    const ids = new Set(activeSeason.participants);
+    return PARTICIPANTS.filter((p) => ids.has(p.id));
+  }, [activeSeason]);
+
+  function handleCreateSeason({
+    name,
+    startDate,
+    dailyLimit,
+    participants,
+    initialPoints,
+  }) {
+    // valores por defecto por si algo viene undefined
+    const payload = {
       name,
       startDate,
-    });
+      dailyLimit: dailyLimit ?? 2,
+      participants:
+        participants && participants.length > 0
+          ? participants
+          : PARTICIPANTS.map((p) => p.id),
+      initialPoints: initialPoints || {},
+    };
+
+    push(ref(db, "seasons"), payload);
   }
 
   function handleChangeSeason(id) {
     setActiveSeasonId(id);
   }
 
-  // ============================
-  // 🔥 ACTIVIDADES (desde Firebase)
-  // ============================
+  // ===== ACTIVIDADES =====
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    if (!activeSeason) return;
+    if (!activeSeason) {
+      return;
+    }
 
     const activitiesRef = ref(db, `activities/${activeSeason.id}`);
     return onValue(activitiesRef, (snapshot) => {
@@ -67,11 +89,9 @@ export default function App() {
       const list = Object.keys(data).map((id) => ({ id, ...data[id] }));
       setActivities(list);
     });
-  }, [activeSeason]);
+  }, [activeSeason?.id]); // mejor depender solo del id
 
-  // ============================
-  // 🟢 Añadir actividad normal
-  // ============================
+  // Añadir actividad normal (1 punto)
   function handleAddActivity(participantId, date) {
     if (!activeSeason) return;
 
@@ -82,9 +102,7 @@ export default function App() {
     });
   }
 
-  // ============================
-  // 🟡 Boost admin (11, 13, 10...)
-  // ============================
+  // Boost admin (p.e. Kevin +11)
   function handleAdminBoost(participantId, points) {
     if (!activeSeason) return;
 
@@ -95,9 +113,6 @@ export default function App() {
     });
   }
 
-  // ============================
-  // 🔧 Reset temporada
-  // ============================
   function handleResetSeason() {
     if (!activeSeason) return;
 
@@ -109,9 +124,6 @@ export default function App() {
     remove(ref(db, `activities/${activeSeason.id}`));
   }
 
-  // ============================
-  // ✏️ Editar actividad
-  // ============================
   function handleUpdateActivity(activityId, newPoints) {
     if (!activeSeason) return;
     update(ref(db, `activities/${activeSeason.id}/${activityId}`), {
@@ -119,9 +131,6 @@ export default function App() {
     });
   }
 
-  // ============================
-  // 🗑 Borrar actividad
-  // ============================
   function handleDeleteActivity(activityId) {
     if (!activeSeason) return;
 
@@ -131,10 +140,29 @@ export default function App() {
     remove(ref(db, `activities/${activeSeason.id}/${activityId}`));
   }
 
-  // ============================
-  // 📌 Interfaz completa
-  // ============================
-  const [selectedView, setSelectedView] = useState("score"); // score | add | history
+  function handleEditTotal(participantId, newTotal, currentTotal) {
+    if (!activeSeason) return;
+
+    const parsedNew = Number(newTotal);
+    if (!Number.isFinite(parsedNew) || parsedNew < 0) {
+      alert("Introduce un número válido (0 o más).");
+      return;
+    }
+
+    const delta = parsedNew - currentTotal;
+    if (delta === 0) {
+      return; // nada que cambiar
+    }
+
+    // Creamos una actividad "ajuste" con la diferencia
+    push(ref(db, `activities/${activeSeason.id}`), {
+      participantId,
+      date: todayISO(),
+      points: delta, // puede ser positivo o negativo
+    });
+  }
+
+  const [selectedView, setSelectedView] = useState("score");
 
   return (
     <div className="app">
@@ -148,12 +176,11 @@ export default function App() {
         activeSeasonId={activeSeason ? activeSeason.id : ""}
         onChangeActiveSeason={handleChangeSeason}
         onCreateSeason={handleCreateSeason}
+        allParticipants={PARTICIPANTS}
       />
 
-      {/* PANEL ADMIN */}
       <AdminPanel activeSeason={activeSeason} onAdminBoost={handleAdminBoost} />
 
-      {/* NAV */}
       <nav className="nav">
         <button
           className={selectedView === "score" ? "nav-btn active" : "nav-btn"}
@@ -161,14 +188,12 @@ export default function App() {
         >
           Clasificación
         </button>
-
         <button
           className={selectedView === "add" ? "nav-btn active" : "nav-btn"}
           onClick={() => setSelectedView("add")}
         >
           Añadir puntos
         </button>
-
         <button
           className={selectedView === "history" ? "nav-btn active" : "nav-btn"}
           onClick={() => setSelectedView("history")}
@@ -177,21 +202,21 @@ export default function App() {
         </button>
       </nav>
 
-      {/* MAIN CONTENT */}
       <main className="content">
         {selectedView === "score" && (
           <Scoreboard
             activities={activities}
-            participants={PARTICIPANTS}
+            participants={participantsForSeason}
             activeSeason={activeSeason}
             onResetSeason={handleResetSeason}
+            onEditTotal={handleEditTotal}
           />
         )}
 
         {selectedView === "add" && (
           <AddPoints
             activities={activities}
-            participants={PARTICIPANTS}
+            participants={participantsForSeason}
             activeSeason={activeSeason}
             onAddActivity={handleAddActivity}
           />

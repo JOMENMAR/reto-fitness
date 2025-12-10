@@ -9,12 +9,7 @@ function getPointsForDay(activities, seasonId, participantId, date) {
   if (!seasonId || !date) return 0;
 
   return activities
-    .filter(
-      (a) =>
-        a.seasonId === seasonId &&
-        a.participantId === participantId &&
-        a.date === date
-    )
+    .filter((a) => a.participantId === participantId && a.date === date)
     .reduce((sum, a) => sum + a.points, 0);
 }
 
@@ -24,7 +19,7 @@ function canAddPoints(
   participantId,
   date,
   extraPoints,
-  maxPerDay = 2
+  maxPerDay
 ) {
   const current = getPointsForDay(activities, seasonId, participantId, date);
   return current + extraPoints <= maxPerDay;
@@ -51,19 +46,20 @@ export function AddPoints({
 
   const effectiveDate =
     selectedDate && selectedDate.trim() !== "" ? selectedDate : todayISO();
+  const dailyLimit = activeSeason.dailyLimit ?? 2;
 
   function handleClick(participantId) {
-    // validación aquí (límite 2/día/persona)
     if (
       !canAddPoints(
         activities,
         activeSeason.id,
         participantId,
         effectiveDate,
-        1
+        1,
+        dailyLimit
       )
     ) {
-      alert("Máximo 2 puntos por persona y día 👮‍♂️");
+      alert(`Máximo ${dailyLimit} puntos por persona y día 👮‍♂️`);
       return;
     }
 
@@ -101,13 +97,13 @@ export function AddPoints({
             p.id,
             effectiveDate
           );
-          const remaining = Math.max(0, 2 - todayPoints);
+          const remaining = Math.max(0, dailyLimit - todayPoints);
 
           return (
             <div key={p.id} className="participant-card">
               <div className="participant-name">{p.name}</div>
               <div className="participant-sub">
-                {effectiveDate}: {todayPoints} / 2 puntos
+                {effectiveDate}: {todayPoints} / {dailyLimit} puntos
               </div>
               <button
                 className="add-btn"
