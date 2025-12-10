@@ -1,16 +1,17 @@
-// src/App.jsx
 import { useState, useMemo, useEffect } from "react";
-import { PARTICIPANTS } from "./data/participants";
 import { SeasonSelector } from "./components/SeasonSelector";
 import { Scoreboard } from "./components/Scoreboard";
 import { AddPoints } from "./components/AddPoints";
 import { History } from "./components/History";
 import { AdminPanel } from "./components/AdminPanel";
+import { ParticipantsManager } from "./components/ParticipantsManager";
 
 import { db } from "./firebase";
 import { ref, onValue, push, update, remove } from "firebase/database";
-
 import "./index.css";
+
+// Usamos este array SOLO como semilla inicial si en Firebase no hay participantes
+import { PARTICIPANTS as DEFAULT_PARTICIPANTS } from "./data/participants";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -20,6 +21,7 @@ export default function App() {
   // ===== TEMPORADAS =====
   const [seasons, setSeasons] = useState([]);
   const [activeSeasonId, setActiveSeasonId] = useState(null);
+  const [participants, setParticipants] = useState([]);
 
   useEffect(() => {
     const seasonsRef = ref(db, "seasons");
@@ -34,6 +36,29 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    const participantsRef = ref(db, "participants");
+
+    return onValue(participantsRef, (snapshot) => {
+      const data = snapshot.val();
+
+      if (data && Object.keys(data).length > 0) {
+        const list = Object.keys(data).map((id) => ({
+          id,
+          name: data[id].name || id,
+        }));
+        setParticipants(list);
+      } else {
+        // Si no hay participantes en la BD, sembramos los por defecto
+        const updates = {};
+        DEFAULT_PARTICIPANTS.forEach((p) => {
+          updates[p.id] = { name: p.name };
+        });
+        update(participantsRef, updates);
+      }
+    });
+  }, []);
+
   const activeSeason = useMemo(
     () => seasons.find((s) => s.id === activeSeasonId) || null,
     [seasons, activeSeasonId]
@@ -42,12 +67,11 @@ export default function App() {
   // PARTICIPANTES activos de la temporada
   const participantsForSeason = useMemo(() => {
     if (!activeSeason || !activeSeason.participants) {
-      // fallback: todos
-      return PARTICIPANTS;
+      return participants;
     }
     const ids = new Set(activeSeason.participants);
-    return PARTICIPANTS.filter((p) => ids.has(p.id));
-  }, [activeSeason]);
+    return participants.filter((p) => ids.has(p.id));
+  }, [activeSeason, participants]);
 
   function handleCreateSeason({
     name,
@@ -64,7 +88,7 @@ export default function App() {
       participants:
         participants && participants.length > 0
           ? participants
-          : PARTICIPANTS.map((p) => p.id),
+          : participants.map((p) => p.id),
       initialPoints: initialPoints || {},
     };
 
@@ -182,6 +206,22 @@ export default function App() {
     setActiveSeasonId(null);
   }
 
+  function slugifyName(name) {
+    return name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+
+  function handleAddParticipant(name) {
+    const id = slugifyName(name) || `p-${Date.now()}`;
+
+    // Guardamos en /participants/{id}
+    update(ref(db, `participants/${id}`), { name });
+  }
+
   const [selectedView, setSelectedView] = useState("score");
 
   return (
@@ -196,8 +236,13 @@ export default function App() {
         activeSeasonId={activeSeason ? activeSeason.id : ""}
         onChangeActiveSeason={handleChangeSeason}
         onCreateSeason={handleCreateSeason}
-        allParticipants={PARTICIPANTS}
-        onDeleteSeason={handleDeleteSeason} // 👈 NUEVO
+        allParticipants={participants}
+        onDeleteSeason={handleDeleteSeason}
+      />
+
+      <ParticipantsManager
+        participants={participants}
+        onAddParticipant={handleAddParticipant}
       />
 
       <AdminPanel activeSeason={activeSeason} onAdminBoost={handleAdminBoost} />
@@ -246,7 +291,7 @@ export default function App() {
         {selectedView === "history" && (
           <History
             activities={activities}
-            participants={PARTICIPANTS}
+            participants={participants}
             activeSeason={activeSeason}
             onUpdateActivity={handleUpdateActivity}
             onDeleteActivity={handleDeleteActivity}
